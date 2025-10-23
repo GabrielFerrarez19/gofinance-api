@@ -1,0 +1,5 @@
+database:
+  driver: pgx
+  url: postgres://postgres:postgres@localhost:5433/gofinance?sslmode=disable
+paths:
+  migrations: ./migrations
