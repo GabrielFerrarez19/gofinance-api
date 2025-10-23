@@ -21,4 +21,14 @@ func NewConnection(cfg *config.Config) (*DB, error) {
 		cfg.DBPassword,
 		cfg.DBName,
 	)
+	db, err := sqlx.Connect("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return &DB{db}, nil
 }
