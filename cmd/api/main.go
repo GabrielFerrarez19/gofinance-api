@@ -3,13 +3,12 @@ package main
 import (
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
-	"github.com/GabrielFerrarez19/gofinance-api/pkg/logger"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/logger"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	cfg, err := config.LoadConfig()
-
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error loading settings")
 	}
