@@ -13,6 +13,13 @@ type Repository struct {
 	q  *sqlc.Queries
 }
 
+func NewRepository(db *pgxpool.Pool) *Repository {
+	return &Repository{
+		db: db,
+		q:  sqlc.New(db),
+	}
+}
+
 func (r *Repository) CreateUser(ctx context.Context, arg sqlc.CreateUserParams) (sqlc.User, error) {
 	return r.q.CreateUser(ctx, arg)
 }
