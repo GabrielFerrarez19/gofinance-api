@@ -20,7 +20,7 @@ func NewService(repo *Repository) *Service {
 	}
 }
 
-func (s *Service) CreateUser(ctx context.Context, req models.CreatedUserRequest) (models.UserResponse, error) {
+func (s *Service) CreateUser(ctx context.Context, req models.CreateUserRequest) (models.UserResponse, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return models.UserResponse{}, err

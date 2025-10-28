@@ -30,7 +30,7 @@ func NewHandler(service *Service) *Handler {
 // @Failure 500 {object} map[string]string
 // @Router /users [post]
 func (h *Handler) CreatedUser(c *gin.Context) {
-	var req models.CreatedUserRequest
+	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
