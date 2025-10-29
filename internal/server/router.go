@@ -1,17 +1,22 @@
 package server
 
 import (
+	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
 	userHandler *user.Handler
+	authHandler *auth.Handler
+	jwtManager  *auth.JWTManager
 }
 
-func NewRouter(userHandler *user.Handler) *Router {
+func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager) *Router {
 	return &Router{
 		userHandler: userHandler,
+		authHandler: authHandler,
+		jwtManager:  jwtManager,
 	}
 }
 
@@ -23,13 +28,22 @@ func (r *Router) SetupRoutes() *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(CORSMiddleware())
 
-	router.GET("/health", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{"status": "StatusOK"})
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
 	})
 
 	api := router.Group("/api/v1")
 	{
+		authGroup := api.Group("/auth")
+		{
+			authGroup.POST("/login", r.authHandler.Login)
+			authGroup.POST("/refresh", r.authHandler.RefreshToken)
+			authGroup.POST("/logout", r.authHandler.Logout)
+			authGroup.GET("/me", r.authHandler.Me)
+		}
+
 		users := api.Group("/users")
+		users.Use(auth.AuthMiddleware(r.jwtManager))
 		{
 			users.POST("", r.userHandler.CreatedUser)
 			users.GET("", r.userHandler.ListUsers)
@@ -37,11 +51,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			users.PUT("/:id", r.userHandler.UpdateUser)
 			users.DELETE("/:id", r.userHandler.DeleteUser)
 		}
-
-		auth := api.Group("/auth")
-		{
-			auth.POST("/login", r.userHandler.Login)
-		}
 	}
+
 	return router
 }

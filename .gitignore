@@ -1,0 +1,122 @@
+# Binários para diferentes plataformas
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+gofinance
+gofinance.exe
+gofinance-linux
+gofinance-windows
+gofinance-darwin
+
+# Arquivos de teste
+*.test
+*.out
+coverage.txt
+coverage.html
+coverage.out
+
+# Dependências
+vendor/
+go.sum
+
+# Arquivos de configuração local
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+*.log
+logs/
+log/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# Arquivos de build
+build/
+dist/
+out/
+target/
+
+# Arquivos de cache
+.cache/
+*.cache
+
+# Arquivos de backup
+*.bak
+*.backup
+*.old
+
+# Arquivos de sistema
+*.pid
+*.seed
+*.pid.lock
+
+# Arquivos de configuração específicos do projeto
+config.local.yaml
+config.local.yml
+config.local.json
+
+# Arquivos de migração temporários
+migrations/temp/
+migrations/backup/
+
+# Arquivos de documentação gerada
+docs/generated/
+swagger/
+
+# Arquivos de teste de integração
+testdata/
+test-results/
+
+# Arquivos de Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Arquivos de CI/CD
+.github/workflows/secrets.yml
+.gitlab-ci-local.yml
+
+# Arquivos de monitoramento
+monitoring/
+grafana/
+prometheus/
+
+# Arquivos de backup do banco
+*.sql.backup
+*.dump
+*.backup
+
+# Arquivos de certificados
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Arquivos de configuração de produção
+production.env
+staging.env

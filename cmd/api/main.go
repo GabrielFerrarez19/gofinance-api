@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/logger"
@@ -24,20 +25,31 @@ func main() {
 
 	logger.InitLogger(cfg.AppEnv)
 
+	// Connect to database
 	db, err := database.NewConnection(cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to database")
+		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer db.Close()
 
+	// Initialize repositories
 	userRepo := user.NewRepository(db.Pool)
 
+	// Initialize services
 	userService := user.NewService(userRepo)
 
+	// Initialize JWT Manager
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret)
+
+	// Initialize auth service
+	authService := auth.NewService(userService, jwtManager)
+
+	// Initialize handlers
 	userHandler := user.NewHandler(userService)
+	authHandler := auth.NewHandler(authService)
 
-	router := server.NewRouter(userHandler)
-
+	// Initialize router
+	router := server.NewRouter(userHandler, authHandler, jwtManager)
 	engine := router.SetupRoutes()
 
 	srv := &http.Server{
@@ -54,6 +66,7 @@ func main() {
 		}
 	}()
 
+	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -65,5 +78,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Server forced to shutdown")
 	}
+
 	log.Info().Msg("Server exited")
 }

@@ -7,40 +7,41 @@ import (
 )
 
 type Config struct {
-	AppEnv  string
-	AppPort string
-
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-
-	RedisHost string
-	RedisPort string
-
+	AppEnv      string
+	AppPort     string
+	DBHost      string
+	DBPort      string
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	RedisHost   string
+	RedisPort   string
 	RabbitMQURL string
-
-	JWTSecret string
+	JWTSecret   string // Adicionar JWT Secret
 }
 
 func LoadConfig() (*Config, error) {
 	// Carrega o .env (opcional - não mostra erro se não existir)
 	_ = godotenv.Load(".env")
 
-	cfg := &Config{
-		AppEnv:      os.Getenv("APP_ENV"),
-		AppPort:     os.Getenv("APP_PORT"),
-		DBHost:      os.Getenv("DB_HOST"),
-		DBPort:      os.Getenv("DB_PORT"),
-		DBUser:      os.Getenv("DB_USER"),
-		DBPassword:  os.Getenv("DB_PASSWORD"),
-		DBName:      os.Getenv("DB_NAME"),
-		RedisHost:   os.Getenv("REDIS_HOST"),
-		RedisPort:   os.Getenv("REDIS_PORT"),
-		RabbitMQURL: os.Getenv("RABBITMQ_URL"),
-		JWTSecret:   os.Getenv("JWT_SECRET"),
-	}
+	return &Config{
+		AppEnv:      getEnv("APP_ENV", "development"),
+		AppPort:     getEnv("APP_PORT", "8080"),
+		DBHost:      getEnv("DB_HOST", "localhost"),
+		DBPort:      getEnv("DB_PORT", "5432"),
+		DBUser:      getEnv("DB_USER", "postgres"),
+		DBPassword:  getEnv("DB_PASSWORD", "postgres"),
+		DBName:      getEnv("DB_NAME", "gofinance"),
+		RedisHost:   getEnv("REDIS_HOST", "localhost"),
+		RedisPort:   getEnv("REDIS_PORT", "6379"),
+		RabbitMQURL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+		JWTSecret:   getEnv("JWT_SECRET", "supersecretkey"), // Adicionar JWT Secret
+	}, nil
+}
 
-	return cfg, nil
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
