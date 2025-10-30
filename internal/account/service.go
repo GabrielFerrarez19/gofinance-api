@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"fmt"
 
 	sqlc "github.com/GabrielFerrarez19/gofinance-api/internal/database/sqlc"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/models"
@@ -24,9 +25,9 @@ func (s *Service) Create(ctx context.Context, userID pgtype.UUID, req models.Cre
 		UserID:      userID,
 		Name:        req.Name,
 		Type:        string(req.Type),
-		Balance:     req.Balance,
+		Balance:     floatToPgNumeric(req.Balance),
 		Currency:    req.Currency,
-		Description: req.Description,
+		Description: strToPgText(req.Description),
 	})
 	if err != nil {
 		return models.AccountResponse{}, err
@@ -112,12 +113,26 @@ func strPtrToPgText(s *string) pgtype.Text {
 	return pgtype.Text{String: *s, Valid: true}
 }
 
+func strToPgText(s string) pgtype.Text {
+	if s == "" {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: s, Valid: true}
+}
+
 func floatPtrToPgNumeric(f *float64) pgtype.Numeric {
 	if f == nil {
 		return pgtype.Numeric{}
 	}
 	var num pgtype.Numeric
-	num.Scan(*f)
+	// formatar com 2 casas para DECIMAL(15,2) e garantir Valid=true
+	_ = num.Scan(fmt.Sprintf("%.2f", *f))
+	return num
+}
+
+func floatToPgNumeric(f float64) pgtype.Numeric {
+	var num pgtype.Numeric
+	_ = num.Scan(fmt.Sprintf("%.2f", f))
 	return num
 }
 
