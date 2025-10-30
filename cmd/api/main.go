@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
@@ -32,24 +33,25 @@ func main() {
 	}
 	defer db.Close()
 
-	// Initialize repositories
-	userRepo := user.NewRepository(db.Pool)
-
-	// Initialize services
-	userService := user.NewService(userRepo)
-
 	// Initialize JWT Manager
 	jwtManager := auth.NewJWTManager(cfg.JWTSecret)
 
-	// Initialize auth service
+	// Initialize repositories
+	userRepo := user.NewRepository(db.Pool)
+	accountRepo := account.NewRepository(db.Pool)
+
+	// Initialize services
+	userService := user.NewService(userRepo)
+	accountService := account.NewService(accountRepo)
 	authService := auth.NewService(userService, jwtManager)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
+	accountHandler := account.NewHandler(accountService)
 
 	// Initialize router
-	router := server.NewRouter(userHandler, authHandler, jwtManager)
+	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler)
 	engine := router.SetupRoutes()
 
 	srv := &http.Server{
