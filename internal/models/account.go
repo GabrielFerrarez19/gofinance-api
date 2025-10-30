@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type AccountType string
@@ -31,11 +30,11 @@ type Account struct {
 }
 
 type CreateAccountRequest struct { // Corrigido: era CreatedAccountRequest
-	Name        string         `json:"name" binding:"required,min=2,max=100"` // Corrigido: removido espaços
-	Type        AccountType    `json:"type" binding:"required,oneof=checking savings credit investment"`
-	Balance     pgtype.Numeric `json:"balance" binding:"gte=0"`
-	Currency    string         `json:"currency" binding:"required,len=3"`
-	Description pgtype.Text    `json:"description" binding:"max=500"`
+	Name        string      `json:"name" binding:"required,min=2,max=100"` // Corrigido: removido espaços
+	Type        AccountType `json:"type" binding:"required,oneof=checking savings credit investment"`
+	Balance     float64     `json:"balance" binding:"required,gte=0"`
+	Currency    string      `json:"currency" binding:"required,len=3"`
+	Description string      `json:"description" binding:"max=500"`
 }
 
 type UpdateAccountRequest struct { // Corrigido: era UpdatedAccountRequest
