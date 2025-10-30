@@ -32,7 +32,7 @@ type Account struct {
 type CreateAccountRequest struct { // Corrigido: era CreatedAccountRequest
 	Name        string      `json:"name" binding:"required,min=2,max=100"` // Corrigido: removido espaços
 	Type        AccountType `json:"type" binding:"required,oneof=checking savings credit investment"`
-	Balance     float64     `json:"balance" binding:"gte=0"`
+	Balance     float64     `json:"balance" binding:"required,gte=0"`
 	Currency    string      `json:"currency" binding:"required,len=3"`
 	Description string      `json:"description" binding:"max=500"`
 }

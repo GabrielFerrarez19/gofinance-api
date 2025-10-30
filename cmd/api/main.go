@@ -8,11 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/logger"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/server"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/rs/zerolog/log"
 )
@@ -32,24 +34,28 @@ func main() {
 	}
 	defer db.Close()
 
-	// Initialize repositories
-	userRepo := user.NewRepository(db.Pool)
-
-	// Initialize services
-	userService := user.NewService(userRepo)
-
 	// Initialize JWT Manager
 	jwtManager := auth.NewJWTManager(cfg.JWTSecret)
 
-	// Initialize auth service
+	// Initialize repositories
+	userRepo := user.NewRepository(db.Pool)
+	accountRepo := account.NewRepository(db.Pool)
+	txRepo := transaction.NewRepository(db.Pool)
+
+	// Initialize services
+	userService := user.NewService(userRepo)
+	accountService := account.NewService(accountRepo)
 	authService := auth.NewService(userService, jwtManager)
+	txService := transaction.NewService(txRepo)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
+	accountHandler := account.NewHandler(accountService)
+	txHandler := transaction.NewHandler(txService)
 
 	// Initialize router
-	router := server.NewRouter(userHandler, authHandler, jwtManager)
+	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler, txHandler)
 	engine := router.SetupRoutes()
 
 	srv := &http.Server{
