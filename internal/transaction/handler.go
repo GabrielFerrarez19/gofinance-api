@@ -93,7 +93,7 @@ func (h *Handler) ListByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
-func (h *Handler) Update(c gin.Context) {
+func (h *Handler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	idUUID, err := uuid.Parse(idStr)
 	if err != nil {

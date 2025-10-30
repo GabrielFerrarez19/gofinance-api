@@ -13,11 +13,8 @@ type Repository struct {
 	q    *sqlc.Queries
 }
 
-func NewRepository(pool *pgxpool.Pool, q *sqlc.Querier) *Repository {
-	return &Repository{
-		pool: pool,
-		q:    sqlc.New(pool),
-	}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool, q: sqlc.New(pool)}
 }
 
 func (r *Repository) Create(ctx context.Context, args sqlc.CreateTransactionParams) (sqlc.Transaction, error) {
