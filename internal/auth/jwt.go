@@ -40,7 +40,7 @@ func (j *JWTManager) GenerateTokenPair(userID uuid.UUID, email, fullname string)
 	accessClaims := &Claims{
 		UserID:   userID,
 		Email:    email,
-		FullName: email,
+		FullName: fullname,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.accessTokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

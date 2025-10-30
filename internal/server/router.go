@@ -1,22 +1,25 @@
 package server
 
 import (
+	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
-	userHandler *user.Handler
-	authHandler *auth.Handler
-	jwtManager  *auth.JWTManager
+	userHandler    *user.Handler
+	authHandler    *auth.Handler
+	jwtManager     *auth.JWTManager
+	accountHandler *account.Handler
 }
 
-func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager) *Router {
+func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler) *Router {
 	return &Router{
-		userHandler: userHandler,
-		authHandler: authHandler,
-		jwtManager:  jwtManager,
+		userHandler:    userHandler,
+		authHandler:    authHandler,
+		jwtManager:     jwtManager,
+		accountHandler: accountHandler,
 	}
 }
 
