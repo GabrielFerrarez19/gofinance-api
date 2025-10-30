@@ -70,6 +70,18 @@ func (s *Service) ListByAccount(ctx context.Context, accountID pgtype.UUID) ([]m
 	return out, nil
 }
 
+func (s *Service) ListByUser(ctx context.Context, userID pgtype.UUID) ([]models.TransactionResponse, error) {
+	list, err := s.repo.ListByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]models.TransactionResponse, 0, len(list))
+	for _, t := range list {
+		out = append(out, toTxResponse(t))
+	}
+	return out, nil
+}
+
 func (s *Service) ListByPeriod(ctx context.Context, userID pgtype.UUID, from, to pgtype.Timestamptz) ([]models.TransactionResponse, error) {
 	list, err := s.repo.ListByPeriod(ctx, userID, from, to)
 	if err != nil {
