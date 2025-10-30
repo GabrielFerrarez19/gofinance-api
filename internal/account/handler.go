@@ -42,6 +42,23 @@ func (h *Handler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, acc)
 }
 
+func (h *Handler) GetByID(c *gin.Context) {
+	idStr := c.Param("id")
+	parsed, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	id := pgtype.UUID{Bytes: parsed, Valid: true}
+
+	acc, err := h.service.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	c.JSON(http.StatusOK, acc)
+}
+
 func (h *Handler) ListByUser(c *gin.Context) {
 	rawUserID, ok := c.Get("user_id")
 	if !ok {
