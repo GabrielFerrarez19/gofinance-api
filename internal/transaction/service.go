@@ -23,7 +23,7 @@ func NewService(repo *Repository) *Service {
 
 func (s *Service) Create(ctx context.Context, userID pgtype.UUID, req models.CreateTransactionRequest) (models.TransactionResponse, error) {
 	var amt pgtype.Numeric
-	if err := amt.Scan(req.Amount); err != nil {
+	if err := amt.Scan(fmt.Sprintf("%.2f", req.Amount)); err != nil {
 		return models.TransactionResponse{}, fmt.Errorf("invalid amount: %w", err)
 	}
 
@@ -134,7 +134,7 @@ func floatPtrToPgNumeric(f *float64) pgtype.Numeric {
 		return pgtype.Numeric{}
 	}
 	var n pgtype.Numeric
-	_ = n.Scan(*f)
+	_ = n.Scan(fmt.Sprintf("%.2f", *f))
 	return n
 }
 
