@@ -7,6 +7,7 @@ import (
 	sqlc "github.com/GabrielFerrarez19/gofinance-api/internal/database/sqlc"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/models"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog/log"
 )
 
 type Service struct {
@@ -62,6 +63,9 @@ func (s *Service) GetByUserID(ctx context.Context, userID pgtype.UUID) ([]models
 func (s *Service) Update(ctx context.Context, id pgtype.UUID, userID pgtype.UUID, req models.UpdateCategoryRequest) (models.CategoryResponse, error) {
 	category, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		log.Info().Msgf("categoria %s", string(category.Name))
+		log.Info().Msgf("erro %s", err)
+
 		return models.CategoryResponse{}, errors.New("category not found")
 	}
 

@@ -99,7 +99,7 @@ func (h *Handler) Update(c *gin.Context) {
 	userID := pgtype.UUID{Bytes: raw.(uuid.UUID), Valid: true}
 	id := pgtype.UUID{Bytes: idUUID, Valid: true}
 
-	out, err := h.service.Update(c.Request.Context(), userID, id, req)
+	out, err := h.service.Update(c.Request.Context(), id, userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
