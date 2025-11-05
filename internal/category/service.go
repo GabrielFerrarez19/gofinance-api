@@ -19,7 +19,7 @@ func NewService(repo *Repository) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, userID pgtype.UUID, req models.CreatedCategoryRequest) (models.CategoryResponse, error) {
+func (s *Service) Create(ctx context.Context, userID pgtype.UUID, req models.CreateCategoryRequest) (models.CategoryResponse, error) {
 	_, err := s.repo.GetByUserIDAndName(ctx, userID, req.Name)
 	if err == nil {
 		return models.CategoryResponse{}, errors.New("category already exists with this name")
