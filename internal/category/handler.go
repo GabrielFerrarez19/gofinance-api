@@ -20,7 +20,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	var req models.CreatedCategoryRequest
+	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -99,7 +99,7 @@ func (h *Handler) Update(c *gin.Context) {
 	userID := pgtype.UUID{Bytes: raw.(uuid.UUID), Valid: true}
 	id := pgtype.UUID{Bytes: idUUID, Valid: true}
 
-	out, err := h.service.Update(c.Request.Context(), userID, id, req)
+	out, err := h.service.Update(c.Request.Context(), id, userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -18,7 +18,7 @@ type Category struct {
 	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
 	DeletedAt   *time.Time `json:"deleted_at" db:"deleted_at"`
 }
-type CreatedCategoryRequest struct {
+type CreateCategoryRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=50"`
 	Description string `json:"description" binding:"max=200"`
 	Color       string `json:"color" binding:"required,hexcolor"`
