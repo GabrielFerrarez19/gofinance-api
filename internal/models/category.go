@@ -32,3 +32,15 @@ type UpdateCategoryRequest struct {
 	Icon        *string `json:"icon" binding:"omitempty,max=50"`
 	IsActive    *bool   `json:"is_active,omitempty"`
 }
+
+type CategoryResponse struct {
+	ID          uuid.UUID `json:"id"`
+	UserID      uuid.UUID `json:"user_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Color       string    `json:"color"`
+	Icon        string    `json:"icon"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}

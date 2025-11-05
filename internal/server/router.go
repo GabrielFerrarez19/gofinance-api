@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/gin-gonic/gin"
@@ -14,15 +15,17 @@ type Router struct {
 	jwtManager     *auth.JWTManager
 	accountHandler *account.Handler
 	txHandler      *transaction.Handler
+	ctHandler      *category.Handler
 }
 
-func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler) *Router {
+func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler, ctHandler *category.Handler) *Router {
 	return &Router{
 		userHandler:    userHandler,
 		authHandler:    authHandler,
 		jwtManager:     jwtManager,
 		accountHandler: accountHandler,
 		txHandler:      txHandler,
+		ctHandler:      ctHandler,
 	}
 }
 
@@ -77,6 +80,16 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			transactions.GET("/:id", r.txHandler.GetByID)
 			transactions.PUT("/:id", r.txHandler.Update)
 			transactions.DELETE("/:id", r.txHandler.Delete)
+		}
+
+		categories := api.Group("/categories")
+		categories.Use(auth.AuthMiddleware(r.jwtManager))
+		{
+			categories.POST("", r.ctHandler.Create)
+			categories.GET("", r.ctHandler.ListByUser)
+			categories.GET("/:id", r.ctHandler.GetByID)
+			categories.PUT("/:id", r.ctHandler.Update)
+			categories.DELETE("/:id", r.ctHandler.Delete)
 		}
 	}
 

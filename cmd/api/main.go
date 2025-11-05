@@ -10,6 +10,7 @@ import (
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/logger"
@@ -41,21 +42,24 @@ func main() {
 	userRepo := user.NewRepository(db.Pool)
 	accountRepo := account.NewRepository(db.Pool)
 	txRepo := transaction.NewRepository(db.Pool)
+	ctRepo := category.NewRepository(db.Pool)
 
 	// Initialize services
 	userService := user.NewService(userRepo)
 	accountService := account.NewService(accountRepo)
 	authService := auth.NewService(userService, jwtManager)
 	txService := transaction.NewService(txRepo)
+	ctService := category.NewService(ctRepo)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
 	accountHandler := account.NewHandler(accountService)
 	txHandler := transaction.NewHandler(txService)
+	ctHandler := category.NewHandler(ctService)
 
 	// Initialize router
-	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler, txHandler)
+	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler, txHandler, ctHandler)
 	engine := router.SetupRoutes()
 
 	srv := &http.Server{
