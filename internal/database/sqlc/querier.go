@@ -12,10 +12,15 @@ import (
 
 type Querier interface {
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	DeletedCategory(ctx context.Context, id pgtype.UUID) error
 	GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, error)
+	GetCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]Category, error)
+	GetCategoryByID(ctx context.Context, id pgtype.UUID) (Category, error)
+	GetCategoryByUserIDAndName(ctx context.Context, arg GetCategoryByUserIDAndNameParams) (Category, error)
 	GetTransactionByID(ctx context.Context, id pgtype.UUID) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
@@ -28,6 +33,7 @@ type Querier interface {
 	SoftDeleteTransaction(ctx context.Context, id pgtype.UUID) error
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
 	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) (Account, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (Transaction, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
