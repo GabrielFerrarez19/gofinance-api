@@ -1,13 +1,19 @@
 package server
 
 import (
+	_ "github.com/GabrielFerrarez19/gofinance-api/docs/swagger"
+
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/report"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
+
 	"github.com/gin-gonic/gin"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Router struct {
@@ -28,7 +34,7 @@ func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager 
 		accountHandler: accountHandler,
 		txHandler:      txHandler,
 		ctHandler:      ctHandler,
-		rpHandler: rpHandler,
+		rpHandler: 		rpHandler,
 	}
 }
 
@@ -39,6 +45,8 @@ func (r *Router) SetupRoutes() *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(CORSMiddleware())
+
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

@@ -19,6 +19,19 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// CreateAccount godoc
+// @Summary Create account
+// @Description Creates a new account owned by the authenticated user
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param account body models.CreateAccountRequest true "Account payload"
+// @Success 201 {object} models.AccountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /accounts [post]
+// @Security BearerAuth
 func (h *Handler) Create(c *gin.Context) {
 	var req models.CreateAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,6 +55,19 @@ func (h *Handler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, acc)
 }
 
+// GetAccount godoc
+// @Summary Get account by ID
+// @Description Returns account details by its identifier
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path string true "Account ID"
+// @Success 200 {object} models.AccountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /accounts/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	parsed, err := uuid.Parse(idStr)
@@ -59,6 +85,17 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, acc)
 }
 
+// ListAccounts godoc
+// @Summary List accounts
+// @Description Returns all accounts for the authenticated user
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.AccountResponse
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /accounts [get]
+// @Security BearerAuth
 func (h *Handler) ListByUser(c *gin.Context) {
 	rawUserID, ok := c.Get("user_id")
 	if !ok {
@@ -77,6 +114,20 @@ func (h *Handler) ListByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, acc)
 }
 
+// UpdateAccount godoc
+// @Summary Update account
+// @Description Updates an existing account
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path string true "Account ID"
+// @Param account body models.UpdateAccountRequest true "Account payload"
+// @Success 200 {object} models.AccountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /accounts/{id} [put]
+// @Security BearerAuth
 func (h *Handler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	parsed, err := uuid.Parse(idStr)
@@ -99,6 +150,19 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, acc)
 }
 
+// DeleteAccount godoc
+// @Summary Delete account
+// @Description Deletes an account by its identifier
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path string true "Account ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /accounts/{id} [delete]
+// @Security BearerAuth
 func (h *Handler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	parsed, err := uuid.Parse(idStr)

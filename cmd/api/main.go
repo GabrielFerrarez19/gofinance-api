@@ -1,3 +1,13 @@
+// @title GoFinance API
+// @version 1.0
+// @description API para gestão financeira pessoal.
+// @BasePath /api/v1
+// @schemes http https
+// @contact.name GoFinance Team
+// @contact.email dev@gofinance.com
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (

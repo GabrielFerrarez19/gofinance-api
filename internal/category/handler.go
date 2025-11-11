@@ -19,6 +19,19 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// CreateCategory godoc
+// @Summary Create category
+// @Description Creates a new category for the authenticated user
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category body models.CreateCategoryRequest true "Category payload"
+// @Success 201 {object} models.CategoryResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /categories [post]
+// @Security BearerAuth
 func (h *Handler) Create(c *gin.Context) {
 	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,6 +55,19 @@ func (h *Handler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, out)
 }
 
+// GetCategory godoc
+// @Summary Get category by ID
+// @Description Returns the details of a specific category
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param id path string true "Category ID"
+// @Success 200 {object} models.CategoryResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /categories/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	idUUID, err := uuid.Parse(idStr)
@@ -59,6 +85,17 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
+// ListCategories godoc
+// @Summary List categories
+// @Description Lists all categories for the authenticated user
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.CategoryResponse
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /categories [get]
+// @Security BearerAuth
 func (h *Handler) ListByUser(c *gin.Context) {
 	raw, ok := c.Get("user_id")
 	if !ok {
@@ -76,6 +113,20 @@ func (h *Handler) ListByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
+// UpdateCategory godoc
+// @Summary Update category
+// @Description Updates an existing category
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param id path string true "Category ID"
+// @Param category body models.UpdateCategoryRequest true "Category payload"
+// @Success 200 {object} models.CategoryResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /categories/{id} [put]
+// @Security BearerAuth
 func (h *Handler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	idUUID, err := uuid.Parse(idStr)
@@ -107,6 +158,19 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
+// DeleteCategory godoc
+// @Summary Delete category
+// @Description Deletes a category by its identifier
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param id path string true "Category ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /categories/{id} [delete]
+// @Security BearerAuth
 func (h *Handler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	idUUID, err := uuid.Parse(idStr)
