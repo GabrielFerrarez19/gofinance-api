@@ -52,7 +52,7 @@ func main() {
 	authService := auth.NewService(userService, jwtManager)
 	txService := transaction.NewService(txRepo)
 	ctService := category.NewService(ctRepo)
-	rpService := report.NewService(rpRepo)
+	rpService := report.NewService(rpRepo, txRepo)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)
