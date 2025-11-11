@@ -4,6 +4,7 @@ import (
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/report"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/gin-gonic/gin"
@@ -16,9 +17,10 @@ type Router struct {
 	accountHandler *account.Handler
 	txHandler      *transaction.Handler
 	ctHandler      *category.Handler
+	rpHandler	*report.Handler
 }
 
-func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler, ctHandler *category.Handler) *Router {
+func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler, ctHandler *category.Handler,rpHandler *report.Handler) *Router {
 	return &Router{
 		userHandler:    userHandler,
 		authHandler:    authHandler,
@@ -26,6 +28,7 @@ func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager 
 		accountHandler: accountHandler,
 		txHandler:      txHandler,
 		ctHandler:      ctHandler,
+		rpHandler: rpHandler,
 	}
 }
 
@@ -90,6 +93,14 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			categories.GET("/:id", r.ctHandler.GetByID)
 			categories.PUT("/:id", r.ctHandler.Update)
 			categories.DELETE("/:id", r.ctHandler.Delete)
+		}
+
+		reports := api.Group("/reports")
+		reports.Use(auth.AuthMiddleware(r.jwtManager))
+		{
+			reports.POST("", r.rpHandler.Create)
+			reports.GET("", r.rpHandler.GetByID)
+			reports.GET("/:id", r.rpHandler.ListByUser)
 		}
 	}
 
