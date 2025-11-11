@@ -49,3 +49,15 @@ type CategorySummary struct {
 	Amount       float64   `json:"amount"`
 	Percentage   float64   `json:"percentage"`
 }
+
+type ReportResponse struct {
+	ID          uuid.UUID      `json:"id"`
+	Type        ReportType     `json:"type"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	StartDate   time.Time      `json:"start_date"`
+	EndDate     time.Time      `json:"end_date"`
+	Data        interface{}    `json:"data"`        // podemos fazer unmarshal para struct específica
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}

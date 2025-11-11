@@ -78,7 +78,7 @@ func (s *Service) Update(ctx context.Context, id pgtype.UUID, userID pgtype.UUID
 	}
 
 	if req.Name != nil {
-		updateParams.Name = pgtype.Text{String: *req.Name, Valid: true}
+		updateParams.Name = *req.Name
 	}
 
 	if req.Description != nil {
@@ -86,7 +86,7 @@ func (s *Service) Update(ctx context.Context, id pgtype.UUID, userID pgtype.UUID
 	}
 
 	if req.Color != nil {
-		updateParams.Color = pgtype.Text{String: *req.Color, Valid: true}
+		updateParams.Color = *req.Color
 	}
 
 	if req.Icon != nil {

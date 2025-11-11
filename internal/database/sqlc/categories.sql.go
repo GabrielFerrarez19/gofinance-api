@@ -170,9 +170,9 @@ RETURNING id, user_id, name, description, color, icon, is_active, created_at, up
 
 type UpdateCategoryParams struct {
 	ID          pgtype.UUID `json:"id"`
-	Name        pgtype.Text `json:"name"`
+	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
-	Color       pgtype.Text `json:"color"`
+	Color       string      `json:"color"`
 	Icon        pgtype.Text `json:"icon"`
 	IsActive    pgtype.Bool `json:"is_active"`
 }
