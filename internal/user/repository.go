@@ -8,6 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type RepositoryInterface interface {
+	CreateUser(ctx context.Context, arg sqlc.CreateUserParams) (sqlc.User, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (sqlc.User, error)
+	GetUserByEmail(ctx context.Context, email string) (sqlc.User, error)
+	UpdateUser(ctx context.Context, arg sqlc.UpdateUserParams) (sqlc.User, error)
+	DeletedUser(ctx context.Context, id pgtype.UUID) error
+	ListUsers(ctx context.Context) ([]sqlc.User, error)
+}
+
 type Repository struct {
 	db *pgxpool.Pool
 	q  *sqlc.Queries

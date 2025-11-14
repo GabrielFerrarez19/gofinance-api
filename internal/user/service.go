@@ -10,13 +10,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type RepositoryInterface interface {
-	CreateUser(ctx context.Context, arg sqlc.CreateUserParams) (sqlc.User, error)
-	GetUserByID(ctx context.Context, id pgtype.UUID) (sqlc.User, error)
-	GetUserByEmail(ctx context.Context, email string) (sqlc.User, error)
-	UpdateUser(ctx context.Context, arg sqlc.UpdateUserParams) (sqlc.User, error)
+type ServiceInterface interface {
+	CreateUser(ctx context.Context, req models.CreateUserRequest) (models.UserResponse, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (models.UserResponse, error)
+	GetUserByEmail(ctx context.Context, email string) (models.UserResponse, error)
+	ValidatorPassword(ctx context.Context, email, password string) (models.UserResponse, error)
+	UpdateUser(ctx context.Context, id pgtype.UUID, req models.UpdateUserRequest) (models.UserResponse, error)
 	DeletedUser(ctx context.Context, id pgtype.UUID) error
-	ListUsers(ctx context.Context) ([]sqlc.User, error)
+	ListUsers(ctx context.Context) ([]models.UserResponse, error)
 }
 
 type Service struct {
