@@ -1,7 +1,7 @@
 package server
 
 import (
-	_ "github.com/GabrielFerrarez19/gofinance-api/docs/swagger"
+	_ "github.com/GabrielFerrarez19/gofinance-api/docs"
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
