@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type MockRepository struct {
@@ -58,20 +58,28 @@ func (m *MockRepository) DeletedUser(ctx context.Context, id pgtype.UUID) error 
 
 func (m *MockRepository) ListUsers(ctx context.Context) ([]sqlc.User, error) {
 	args := m.Called(ctx)
-	if args.Get(0) == nil {
+	if args.Error(1) != nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]sqlc.User), args.Error(1)
+	if args.Get(0) == nil {
+		return []sqlc.User{}, nil
+	}
+	users, ok := args.Get(0).([]sqlc.User)
+	if !ok {
+		return []sqlc.User{}, nil
+	}
+	return users, nil
 }
 
 func createTestUser() sqlc.User {
 	userID := uuid.New()
 	now := time.Now()
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
 	return sqlc.User{
 		ID:           pgtype.UUID{Bytes: userID, Valid: true},
 		FullName:     "João Silva",
 		Email:        "joao@test.com",
-		PasswordHash: "$2a$10$TgJ3Bv8a6c5fef2zQ9vG1uUeIm7H6zN2qGQkY7m3X4Cqk6bAq3l7a",
+		PasswordHash: string(hashedPassword),
 		IsActive:     pgtype.Bool{Bool: true, Valid: true},
 		CreatedAt:    pgtype.Timestamptz{Time: now, Valid: true},
 		UpdatedAt:    pgtype.Timestamptz{Time: now, Valid: true},
@@ -355,7 +363,7 @@ func TestService_ListUsers(t *testing.T) {
 	}{
 		{
 			name:       "success - empty list",
-			mockUsers:  []sqlc.User{},
+			mockUsers:  make([]sqlc.User, 0),
 			mockError:  nil,
 			wantErr:    false,
 			wantLength: 0,
@@ -393,7 +401,6 @@ func TestService_ListUsers(t *testing.T) {
 				assert.Nil(t, result)
 			} else {
 				assert.NoError(t, err)
-				require.NotNil(t, result)
 				assert.Len(t, result, tt.wantLength)
 			}
 			mockRepo.AssertExpectations(t)
