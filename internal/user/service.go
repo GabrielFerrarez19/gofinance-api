@@ -10,11 +10,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Service struct {
-	repo *Repository
+type ServiceInterface interface {
+	CreateUser(ctx context.Context, req models.CreateUserRequest) (models.UserResponse, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (models.UserResponse, error)
+	GetUserByEmail(ctx context.Context, email string) (models.UserResponse, error)
+	ValidatorPassword(ctx context.Context, email, password string) (models.UserResponse, error)
+	UpdateUser(ctx context.Context, id pgtype.UUID, req models.UpdateUserRequest) (models.UserResponse, error)
+	DeletedUser(ctx context.Context, id pgtype.UUID) error
+	ListUsers(ctx context.Context) ([]models.UserResponse, error)
 }
 
-func NewService(repo *Repository) *Service {
+type Service struct {
+	repo RepositoryInterface
+}
+
+func NewService(repo RepositoryInterface) *Service {
 	return &Service{
 		repo: repo,
 	}
