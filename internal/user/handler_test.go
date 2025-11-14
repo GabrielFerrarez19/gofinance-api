@@ -104,7 +104,6 @@ func TestHandler_CreatedUser(t *testing.T) {
 			name: "invalid request body",
 			requestBody: map[string]interface{}{
 				"full_name": "João",
-				// email missing
 			},
 			mockResponse:   models.UserResponse{},
 			mockError:      nil,
@@ -125,7 +124,6 @@ func TestHandler_CreatedUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			mockService := new(MockService)
 			handler := NewHandler(mockService)
 
@@ -137,14 +135,12 @@ func TestHandler_CreatedUser(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
-			if tt.expectedStatus == http.StatusCreated {
+			if tt.expectedStatus == http.StatusCreated || tt.expectedStatus == http.StatusInternalServerError {
 				mockService.On("CreateUser", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
 			}
 
-			// Execute
 			router.ServeHTTP(w, req)
 
-			// Assert
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			if tt.expectedStatus == http.StatusCreated {
 				var response models.UserResponse
@@ -152,7 +148,9 @@ func TestHandler_CreatedUser(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotEmpty(t, response.ID)
 			}
-			mockService.AssertExpectations(t)
+			if tt.expectedStatus == http.StatusCreated || tt.expectedStatus == http.StatusInternalServerError {
+				mockService.AssertExpectations(t)
+			}
 		})
 	}
 }
@@ -199,7 +197,6 @@ func TestHandler_GetUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			mockService := new(MockService)
 			handler := NewHandler(mockService)
 
@@ -209,15 +206,13 @@ func TestHandler_GetUser(t *testing.T) {
 			req := httptest.NewRequest("GET", "/users/"+tt.userID, nil)
 			w := httptest.NewRecorder()
 
-			if tt.expectedStatus == http.StatusOK {
+			if tt.expectedStatus == http.StatusOK || (tt.expectedStatus == http.StatusNotFound && tt.userID == validID) {
 				id := pgtype.UUID{Bytes: userID, Valid: true}
 				mockService.On("GetUserByID", mock.Anything, id).Return(tt.mockResponse, tt.mockError)
 			}
 
-			// Execute
 			router.ServeHTTP(w, req)
 
-			// Assert
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			if tt.expectedStatus == http.StatusOK {
 				var response models.UserResponse
@@ -225,7 +220,9 @@ func TestHandler_GetUser(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tt.mockResponse.Email, response.Email)
 			}
-			mockService.AssertExpectations(t)
+			if tt.expectedStatus == http.StatusOK || (tt.expectedStatus == http.StatusNotFound && tt.userID == validID) {
+				mockService.AssertExpectations(t)
+			}
 		})
 	}
 }
@@ -258,7 +255,6 @@ func TestHandler_ListUsers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			mockService := new(MockService)
 			handler := NewHandler(mockService)
 
@@ -270,10 +266,8 @@ func TestHandler_ListUsers(t *testing.T) {
 
 			mockService.On("ListUsers", mock.Anything).Return(tt.mockResponse, tt.mockError)
 
-			// Execute
 			router.ServeHTTP(w, req)
 
-			// Assert
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			if tt.expectedStatus == http.StatusOK {
 				var response []models.UserResponse
@@ -282,6 +276,215 @@ func TestHandler_ListUsers(t *testing.T) {
 				assert.Len(t, response, len(tt.mockResponse))
 			}
 			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestHandler_UpdateUser(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	userID := uuid.New()
+	validID := userID.String()
+
+	tests := []struct {
+		name           string
+		userID         string
+		requestBody    interface{}
+		mockResponse   models.UserResponse
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:   "success - update full name",
+			userID: validID,
+			requestBody: models.UpdateUserRequest{
+				FullName: "João Silva Updated",
+			},
+			mockResponse: models.UserResponse{
+				ID:       userID,
+				FullName: "João Silva Updated",
+				Email:    "joao@test.com",
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:   "success - update email",
+			userID: validID,
+			requestBody: models.UpdateUserRequest{
+				Email: "joao.updated@test.com",
+			},
+			mockResponse: models.UserResponse{
+				ID:       userID,
+				FullName: "João Silva",
+				Email:    "joao.updated@test.com",
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:   "success - update both fields",
+			userID: validID,
+			requestBody: models.UpdateUserRequest{
+				FullName: "João Silva Updated",
+				Email:    "joao.updated@test.com",
+			},
+			mockResponse: models.UserResponse{
+				ID:       userID,
+				FullName: "João Silva Updated",
+				Email:    "joao.updated@test.com",
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid UUID",
+			userID:         "invalid-uuid",
+			requestBody:    models.UpdateUserRequest{FullName: "João Silva"},
+			mockResponse:   models.UserResponse{},
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "invalid request body",
+			userID: validID,
+			requestBody: map[string]interface{}{
+				"email": "invalid-email",
+			},
+			mockResponse:   models.UserResponse{},
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "user not found",
+			userID: validID,
+			requestBody: models.UpdateUserRequest{
+				FullName: "João Silva Updated",
+			},
+			mockResponse:   models.UserResponse{},
+			mockError:      errors.New("user not found"),
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:        "empty request body",
+			userID:      validID,
+			requestBody: models.UpdateUserRequest{},
+			mockResponse: models.UserResponse{
+				ID:       userID,
+				FullName: "João Silva",
+				Email:    "joao@test.com",
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockService := new(MockService)
+			handler := NewHandler(mockService)
+
+			router := gin.New()
+			router.PUT("/users/:id", handler.UpdateUser)
+
+			body, _ := json.Marshal(tt.requestBody)
+			req := httptest.NewRequest("PUT", "/users/"+tt.userID, bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			if tt.expectedStatus == http.StatusOK {
+				id := pgtype.UUID{Bytes: userID, Valid: true}
+				mockService.On("UpdateUser", mock.Anything, id, mock.Anything).Return(tt.mockResponse, tt.mockError)
+			} else if tt.expectedStatus == http.StatusNotFound {
+				id := pgtype.UUID{Bytes: userID, Valid: true}
+				mockService.On("UpdateUser", mock.Anything, id, mock.Anything).Return(tt.mockResponse, tt.mockError)
+			}
+
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
+			if tt.expectedStatus == http.StatusOK {
+				var response models.UserResponse
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				require.NoError(t, err)
+				assert.Equal(t, tt.mockResponse.ID, response.ID)
+				if tt.mockResponse.FullName != "" {
+					assert.Equal(t, tt.mockResponse.FullName, response.FullName)
+				}
+				if tt.mockResponse.Email != "" {
+					assert.Equal(t, tt.mockResponse.Email, response.Email)
+				}
+			}
+			if tt.expectedStatus == http.StatusOK || tt.expectedStatus == http.StatusNotFound {
+				mockService.AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestHandler_DeleteUser(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	userID := uuid.New()
+	validID := userID.String()
+
+	tests := []struct {
+		name           string
+		userID         string
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "success",
+			userID:         validID,
+			mockError:      nil,
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "invalid UUID",
+			userID:         "invalid-uuid",
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "user not found",
+			userID:         validID,
+			mockError:      errors.New("user not found"),
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "service error",
+			userID:         validID,
+			mockError:      errors.New("database error"),
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockService := new(MockService)
+			handler := NewHandler(mockService)
+
+			router := gin.New()
+			router.DELETE("/users/:id", handler.DeleteUser)
+
+			req := httptest.NewRequest("DELETE", "/users/"+tt.userID, nil)
+			w := httptest.NewRecorder()
+
+			if tt.expectedStatus == http.StatusNoContent || (tt.expectedStatus == http.StatusNotFound && tt.userID == validID) {
+				id := pgtype.UUID{Bytes: userID, Valid: true}
+				mockService.On("DeletedUser", mock.Anything, id).Return(tt.mockError)
+			}
+
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
+			if tt.expectedStatus == http.StatusNoContent {
+				assert.Empty(t, w.Body.String())
+			}
+			if tt.expectedStatus == http.StatusNoContent || tt.expectedStatus == http.StatusNotFound {
+				mockService.AssertExpectations(t)
+			}
 		})
 	}
 }
