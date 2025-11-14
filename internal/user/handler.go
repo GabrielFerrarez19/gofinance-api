@@ -29,6 +29,7 @@ func NewHandler(service ServiceInterface) *Handler {
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /users [post]
+// @Security BearerAuth
 func (h *Handler) CreatedUser(c *gin.Context) {
 	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -54,6 +55,7 @@ func (h *Handler) CreatedUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /users/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetUser(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -84,6 +86,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /users/{id} [put]
+// @Security BearerAuth
 func (h *Handler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -120,6 +123,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /users/{id} [delete]
+// @Security BearerAuth
 func (h *Handler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -147,6 +151,7 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 // @Success 200 {array} models.UserResponse
 // @Failure 500 {object} map[string]string
 // @Router /users [get]
+// @Security BearerAuth
 func (h *Handler) ListUsers(c *gin.Context) {
 	users, err := h.service.ListUsers(c.Request.Context())
 	if err != nil {

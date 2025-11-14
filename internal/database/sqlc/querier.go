@@ -13,18 +13,22 @@ import (
 type Querier interface {
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
+	CreateReport(ctx context.Context, arg CreateReportParams) (Report, error)
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteReport(ctx context.Context, id pgtype.UUID) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	DeletedCategory(ctx context.Context, id pgtype.UUID) error
 	GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, error)
 	GetCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id pgtype.UUID) (Category, error)
 	GetCategoryByUserIDAndName(ctx context.Context, arg GetCategoryByUserIDAndNameParams) (Category, error)
+	GetReportByID(ctx context.Context, id pgtype.UUID) (Report, error)
 	GetTransactionByID(ctx context.Context, id pgtype.UUID) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	ListAccountsByUser(ctx context.Context, userID pgtype.UUID) ([]Account, error)
+	ListReportsByUser(ctx context.Context, userID pgtype.UUID) ([]Report, error)
 	ListTransactionsByAccount(ctx context.Context, accountID pgtype.UUID) ([]Transaction, error)
 	ListTransactionsByPeriod(ctx context.Context, arg ListTransactionsByPeriodParams) ([]Transaction, error)
 	ListTransactionsByUser(ctx context.Context, userID pgtype.UUID) ([]Transaction, error)
@@ -34,6 +38,7 @@ type Querier interface {
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
 	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) (Account, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
+	UpdateReport(ctx context.Context, arg UpdateReportParams) (Report, error)
 	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (Transaction, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
