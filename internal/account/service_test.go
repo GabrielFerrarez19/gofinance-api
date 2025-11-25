@@ -147,3 +147,166 @@ func TestService_CreateAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetByID(t *testing.T) {
+	tests := []struct {
+		name        string
+		id          pgtype.UUID
+		mockAccount sqlc.Account
+		mockError   error
+		wantErr     bool
+	}{
+		{
+			name:        "success",
+			id:          pgtype.UUID{Bytes: uuid.New(), Valid: true},
+			mockAccount: createTestAccount(),
+			mockError:   nil,
+			wantErr:     false,
+		},
+		{
+			name:        "account not found",
+			id:          pgtype.UUID{Bytes: uuid.New(), Valid: true},
+			mockAccount: createTestAccount(),
+			mockError:   errors.New("account not found"),
+			wantErr:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mokeRepo := new(MokeRepository)
+			service := NewService(mokeRepo)
+			mokeRepo.On("GetById", mock.Anything, tt.id).Return(tt.mockAccount, tt.mockError)
+
+			result, err := service.GetByID(context.Background(), tt.id)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, result.ID)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, result.ID)
+				assert.Equal(t, tt.mockAccount.Name, result.Name)
+			}
+			mokeRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_ListByUser(t *testing.T) {
+	tests := []struct {
+		name         string
+		userID       pgtype.UUID
+		mockAccounts []sqlc.Account
+		mockError    error
+		wantErr      bool
+		wantLength   int
+	}{
+		{
+			name:         "success",
+			userID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+			mockAccounts: []sqlc.Account{createTestAccount()},
+			mockError:    nil,
+			wantErr:      false,
+			wantLength:   1,
+		}, {
+			name:         "user not found",
+			userID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+			mockAccounts: []sqlc.Account{},
+			mockError:    errors.New("user not found"),
+			wantErr:      true,
+			wantLength:   0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mokeRepo := new(MokeRepository)
+			service := NewService(mokeRepo)
+
+			mokeRepo.On("ListByUser", mock.Anything, tt.userID).Return(tt.mockAccounts, tt.mockError)
+
+			result, err := service.ListByUser(context.Background(), tt.userID)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.Len(t, result, tt.wantLength)
+			}
+			mokeRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_Update(t *testing.T) {
+	accountID := uuid.New()
+	id := pgtype.UUID{Bytes: accountID, Valid: true}
+	ty := models.AccountType("checking")
+
+	tests := []struct {
+		name        string
+		id          pgtype.UUID
+		req         models.UpdateAccountRequest
+		mockAccount sqlc.Account
+		mockError   error
+		wantErr     bool
+	}{
+		{
+			name: "success",
+			id:   id,
+			req: models.UpdateAccountRequest{
+				Name:        stringPtr("Gabriel Cristiano Updated"),
+				Type:        &ty,
+				Balance:     floatPtr(1100.50),
+				Currency:    stringPtr("BRL"),
+				Description: stringPtr("Conta pricipal"),
+			},
+			mockAccount: createTestAccount(),
+			mockError:   nil,
+			wantErr:     false,
+		},
+		{
+			name: "repository error",
+			id:   id,
+			req: models.UpdateAccountRequest{
+				Name:        stringPtr("Gabriel Cristiano Updated"),
+				Type:        &ty,
+				Balance:     floatPtr(1100.50),
+				Currency:    stringPtr("BRL"),
+				Description: stringPtr("Conta pricipal"),
+			},
+			mockAccount: sqlc.Account{},
+			mockError:   errors.New("database error"),
+			wantErr:     true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(MokeRepository)
+			service := NewService(mockRepo)
+
+			mockRepo.On("Update", mock.Anything, mock.Anything).Return(tt.mockAccount, tt.mockError)
+
+			result, err := service.Update(context.Background(), tt.id, tt.req)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, result.ID)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, result.ID)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+// Helper function
+func stringPtr(s string) *string {
+	return &s
+}
+
+func floatPtr(f float64) *float64 {
+	return &f
+}
