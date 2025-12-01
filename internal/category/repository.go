@@ -36,6 +36,10 @@ func (r *Repository) Update(ctx context.Context, arg sqlc.UpdateCategoryParams) 
 	return r.q.UpdateCategory(ctx, arg)
 }
 
+func (r *Repository) UpdateCategory(ctx context.Context, arg sqlc.UpdateCategoryParams) (sqlc.Category, error) {
+	return r.q.UpdateCategory(ctx, arg)
+}
+
 func (r *Repository) SoftDelete(ctx context.Context, id pgtype.UUID) error {
 	return r.q.DeletedCategory(ctx, id)
 }

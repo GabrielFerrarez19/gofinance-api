@@ -10,11 +10,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Service struct {
-	repo *Repository
+type ServiceInterface interface {
+	Create(ctx context.Context, userID pgtype.UUID, req models.CreateAccountRequest) (models.AccountResponse, error)
+	GetByID(ctx context.Context, id pgtype.UUID) (models.AccountResponse, error)
+	ListByUser(ctx context.Context, userID pgtype.UUID) ([]models.AccountResponse, error)
+	Update(ctx context.Context, id pgtype.UUID, req models.UpdateAccountRequest) (models.AccountResponse, error)
+	Delete(ctx context.Context, id pgtype.UUID) error
 }
 
-func NewService(repo *Repository) *Service {
+type Service struct {
+	repo RepositoryInterface
+}
+
+func NewService(repo RepositoryInterface) *Service {
 	return &Service{
 		repo: repo,
 	}

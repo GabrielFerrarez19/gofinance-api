@@ -10,8 +10,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type RepositoryInterface interface {
+	Create(ctx context.Context, arg sqlc.CreateCategoryParams) (sqlc.Category, error)
+	GetByID(ctx context.Context, id pgtype.UUID) (sqlc.Category, error)
+	GetByUserID(ctx context.Context, UserID pgtype.UUID) ([]sqlc.Category, error)
+	GetByUserIDAndName(ctx context.Context, userID pgtype.UUID, name string) (sqlc.Category, error)
+	SoftDelete(ctx context.Context, id pgtype.UUID) error
+	UpdateCategory(ctx context.Context, arg sqlc.UpdateCategoryParams) (sqlc.Category, error)
+}
+
 type Service struct {
-	repo *Repository
+	repo RepositoryInterface
 }
 
 func NewService(repo *Repository) *Service {
@@ -97,7 +106,7 @@ func (s *Service) Update(ctx context.Context, id pgtype.UUID, userID pgtype.UUID
 		updateParams.IsActive = pgtype.Bool{Bool: *req.IsActive, Valid: true}
 	}
 
-	updated, err := s.repo.q.UpdateCategory(ctx, updateParams)
+	updated, err := s.repo.UpdateCategory(ctx, updateParams)
 	if err != nil {
 		return models.CategoryResponse{}, err
 	}
