@@ -11,8 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type RepositoryInterface interface {
+	Create(ctx context.Context, args sqlc.CreateTransactionParams) (sqlc.Transaction, error)
+	GetById(ctx context.Context, id pgtype.UUID) (sqlc.Transaction, error)
+	ListByAccount(ctx context.Context, accID pgtype.UUID) ([]sqlc.Transaction, error)
+	ListByUser(ctx context.Context, userID pgtype.UUID) ([]sqlc.Transaction, error)
+	ListByPeriod(ctx context.Context, userID pgtype.UUID, from, to pgtype.Timestamptz) ([]sqlc.Transaction, error)
+	Updated(ctx context.Context, arg sqlc.UpdateTransactionParams) (sqlc.Transaction, error)
+	SoftDelete(ctx context.Context, id pgtype.UUID) error
+}
+
 type Service struct {
-	repo *Repository
+	repo RepositoryInterface
 }
 
 func NewService(repo *Repository) *Service {
