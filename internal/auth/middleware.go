@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/GabrielFerrarez19/gofinance-api/internal/cache"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
-func AuthMiddleware(jwtManager *JWTManager) gin.HandlerFunc {
+func AuthMiddleware(jwtManager *JWTManager, blacklist *cache.TokenBlacklist) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

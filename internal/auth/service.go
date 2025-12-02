@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/GabrielFerrarez19/gofinance-api/internal/cache"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/models"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/user"
 	"github.com/gin-gonic/gin"
@@ -14,12 +16,14 @@ import (
 type Service struct {
 	userService *user.Service
 	jwtManager  *JWTManager
+	blacklist   *cache.TokenBlacklist
 }
 
-func NewService(userService *user.Service, jwtManager *JWTManager) *Service {
+func NewService(userService *user.Service, jwtManager *JWTManager, blacklist *cache.TokenBlacklist) *Service {
 	return &Service{
 		userService: userService,
 		jwtManager:  jwtManager,
+		blacklist:   blacklist,
 	}
 }
 
@@ -84,9 +88,22 @@ func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (*Login
 }
 
 func (s *Service) Logout(ctx context.Context, token string) error {
-	// TODO: Implementar blacklist de tokens com Redis
-	log.Info().Msg("User logged out")
-	return nil
+	// Validar token para extrair claims
+	claims, err := s.jwtManager.ValidateToken(token)
+	if err != nil {
+		return err
+	}
+
+	// Calcular tempo restante do token
+	expiresIn := time.Until(claims.ExpiresAt.Time)
+	if expiresIn <= 0 {
+		// Token já expirado, não precisa adicionar á blacklist
+		return nil
+	}
+
+	// Adicionar token á blacklist
+	tokenID := fmt.Sprintf("%s:%d", claims.UserID.String(), claims.ExpiresAt.Unix())
+	return s.blacklist.AddToken(ctx, tokenID, expiresIn)
 }
 
 func (s *Service) SetAuthCookies(c *gin.Context, response *LoginResponse) {

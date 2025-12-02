@@ -5,6 +5,7 @@ import (
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/cache"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/report"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
@@ -23,10 +24,11 @@ type Router struct {
 	accountHandler *account.Handler
 	txHandler      *transaction.Handler
 	ctHandler      *category.Handler
-	rpHandler	*report.Handler
+	rpHandler      *report.Handler
+	blacklist      *cache.TokenBlacklist
 }
 
-func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler, ctHandler *category.Handler,rpHandler *report.Handler) *Router {
+func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager *auth.JWTManager, accountHandler *account.Handler, txHandler *transaction.Handler, ctHandler *category.Handler, rpHandler *report.Handler, blacklist *cache.TokenBlacklist) *Router {
 	return &Router{
 		userHandler:    userHandler,
 		authHandler:    authHandler,
@@ -34,7 +36,8 @@ func NewRouter(userHandler *user.Handler, authHandler *auth.Handler, jwtManager 
 		accountHandler: accountHandler,
 		txHandler:      txHandler,
 		ctHandler:      ctHandler,
-		rpHandler: 		rpHandler,
+		rpHandler:      rpHandler,
+		blacklist:      blacklist,
 	}
 }
 
@@ -63,7 +66,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		}
 
 		users := api.Group("/users")
-		users.Use(auth.AuthMiddleware(r.jwtManager))
+		users.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
 			users.POST("", r.userHandler.CreatedUser)
 			users.GET("", r.userHandler.ListUsers)
@@ -73,7 +76,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		}
 
 		accounts := api.Group("/accounts")
-		accounts.Use(auth.AuthMiddleware(r.jwtManager))
+		accounts.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
 			accounts.POST("", r.accountHandler.Create)
 			accounts.GET("", r.accountHandler.ListByUser)
@@ -83,7 +86,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		}
 
 		transactions := api.Group("/transactions")
-		transactions.Use(auth.AuthMiddleware(r.jwtManager))
+		transactions.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
 			transactions.POST("", r.txHandler.Create)
 			transactions.GET("", r.txHandler.ListByUser)
@@ -94,7 +97,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		}
 
 		categories := api.Group("/categories")
-		categories.Use(auth.AuthMiddleware(r.jwtManager))
+		categories.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
 			categories.POST("", r.ctHandler.Create)
 			categories.GET("", r.ctHandler.ListByUser)
@@ -104,7 +107,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		}
 
 		reports := api.Group("/reports")
-		reports.Use(auth.AuthMiddleware(r.jwtManager))
+		reports.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
 			reports.POST("", r.rpHandler.Create)
 			reports.GET("", r.rpHandler.GetByID)

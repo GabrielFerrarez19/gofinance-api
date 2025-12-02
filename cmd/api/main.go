@@ -20,6 +20,7 @@ import (
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/account"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/auth"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/cache"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/category"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
@@ -46,6 +47,17 @@ func main() {
 	}
 	defer db.Close()
 
+	// Connect to Redis
+	redisClient, err := cache.NewRedisConnection(cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to Redis")
+	}
+	defer redisClient.Close()
+
+	// Initialize cache services
+	cacheService := cache.NewCacheService(redisClient)
+	tokenBlacklist := cache.NewTokenBlacklist(redisClient)
+
 	// Initialize JWT Manager
 	jwtManager := auth.NewJWTManager(cfg.JWTSecret)
 
@@ -59,7 +71,7 @@ func main() {
 	// Initialize services
 	userService := user.NewService(userRepo)
 	accountService := account.NewService(accountRepo)
-	authService := auth.NewService(userService, jwtManager)
+	authService := auth.NewService(userService, jwtManager, tokenBlacklist)
 	txService := transaction.NewService(txRepo)
 	ctService := category.NewService(ctRepo)
 	rpService := report.NewService(rpRepo, txRepo)
@@ -73,7 +85,7 @@ func main() {
 	rpHandler := report.NewHandler(rpService)
 
 	// Initialize router
-	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler, txHandler, ctHandler, rpHandler)
+	router := server.NewRouter(userHandler, authHandler, jwtManager, accountHandler, txHandler, ctHandler, rpHandler, tokenBlacklist)
 	engine := router.SetupRoutes()
 
 	srv := &http.Server{
