@@ -8,17 +8,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// Handler processa requisições HTTP relacionadas a usuários
+// Valida dados de entrada, chama o serviço e retorna respostas HTTP apropriadas
 type Handler struct {
-	service ServiceInterface
+	service ServiceInterface // Serviço com lógica de negócio
 }
 
+// NewHandler cria uma nova instância do handler de usuários
 func NewHandler(service ServiceInterface) *Handler {
 	return &Handler{
 		service: service,
 	}
 }
 
-// CreateUser godoc
+// CreatedUser cria um novo usuário no sistema
 // @Summary Create a new user
 // @Description Create a new user account
 // @Tags users
@@ -31,20 +34,25 @@ func NewHandler(service ServiceInterface) *Handler {
 // @Router /users [post]
 // @Security BearerAuth
 func (h *Handler) CreatedUser(c *gin.Context) {
+	// Validar e bind do JSON da requisição para o modelo
 	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Chamar serviço para criar usuário
 	user, err := h.service.CreateUser(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Retornar usuário criado com status 201 Created
 	c.JSON(http.StatusCreated, user)
 }
 
-// GetUser godoc
+// GetUser busca um usuário pelo ID
 // @Summary Get user by ID
 // @Description Get user information by ID
 // @Tags users
@@ -57,8 +65,10 @@ func (h *Handler) CreatedUser(c *gin.Context) {
 // @Router /users/{id} [get]
 // @Security BearerAuth
 func (h *Handler) GetUser(c *gin.Context) {
+	// Obter ID da URL
 	idStr := c.Param("id")
 
+	// Converter string para UUID (pgtype.UUID)
 	var id pgtype.UUID
 	err := id.Scan(idStr)
 	if err != nil {
@@ -66,15 +76,17 @@ func (h *Handler) GetUser(c *gin.Context) {
 		return
 	}
 
+	// Buscar usuário pelo ID
 	user, err := h.service.GetUserByID(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
+
 	c.JSON(http.StatusOK, user)
 }
 
-// UpdateUser godoc
+// UpdateUser atualiza os dados de um usuário existente
 // @Summary Update user
 // @Description Update user information
 // @Tags users
@@ -88,8 +100,10 @@ func (h *Handler) GetUser(c *gin.Context) {
 // @Router /users/{id} [put]
 // @Security BearerAuth
 func (h *Handler) UpdateUser(c *gin.Context) {
+	// Obter ID da URL
 	idStr := c.Param("id")
 
+	// Converter string para UUID
 	var id pgtype.UUID
 	err := id.Scan(idStr)
 	if err != nil {
@@ -97,12 +111,14 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Validar e bind do JSON da requisição
 	var req models.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Atualizar usuário
 	user, err := h.service.UpdateUser(c.Request.Context(), id, req)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -112,7 +128,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// DeleteUser godoc
+// DeleteUser realiza soft delete de um usuário
 // @Summary Delete user
 // @Description Delete user (soft delete)
 // @Tags users
@@ -125,8 +141,10 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 // @Router /users/{id} [delete]
 // @Security BearerAuth
 func (h *Handler) DeleteUser(c *gin.Context) {
+	// Obter ID da URL
 	idStr := c.Param("id")
 
+	// Converter string para UUID
 	var id pgtype.UUID
 	err := id.Scan(idStr)
 	if err != nil {
@@ -134,15 +152,18 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// Deletar usuário (soft delete)
 	err = h.service.DeletedUser(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
+
+	// Retornar 204 No Content (sucesso sem corpo de resposta)
 	c.Status(http.StatusNoContent)
 }
 
-// ListUsers godoc
+// ListUsers retorna todos os usuários do sistema
 // @Summary List all users
 // @Description Get list of all users
 // @Tags users
@@ -153,6 +174,7 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 // @Router /users [get]
 // @Security BearerAuth
 func (h *Handler) ListUsers(c *gin.Context) {
+	// Buscar todos os usuários
 	users, err := h.service.ListUsers(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list users"})
