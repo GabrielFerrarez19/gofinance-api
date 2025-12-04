@@ -51,14 +51,25 @@ type CategorySummary struct {
 }
 
 type ReportResponse struct {
-	ID          uuid.UUID      `json:"id"`
-	UserID	uuid.UUID	`json:"user_id"`
-	Type        ReportType     `json:"type"`
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	StartDate   time.Time      `json:"start_date"`
-	EndDate     time.Time      `json:"end_date"`
-	Data        any    `json:"data"`        
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID  `json:"id"`
+	UserID      uuid.UUID  `json:"user_id"`
+	Type        ReportType `json:"type"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	StartDate   time.Time  `json:"start_date"`
+	EndDate     time.Time  `json:"end_date"`
+	Data        any        `json:"data"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+// ReportJobPayload representa os dados necessários para gerar um relatório
+type ReportJobPayload struct {
+	UserID      string    `json:"user_id"`     // ID do usuário
+	ReportID    string    `json:"report_id"`   // ID do relatório a ser gerado
+	Type        string    `json:"type"`        // Tipo de relatório
+	Title       string    `json:"title"`       // Título do relatório
+	Description string    `json:"description"` // Descrição do relatório
+	StartDate   time.Time `json:"start_date"`  // Data inicial
+	EndDate     time.Time `json:"end_date"`    // Data final
 }

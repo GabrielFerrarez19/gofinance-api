@@ -2,6 +2,7 @@ package queue
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -17,11 +18,34 @@ type RabbitMQClient struct {
 
 // NewRabbitMQConnection cria uma nova conexão com RabbitMQ
 // Estabelece conexão e canal para publicar/consumir mensagens
+// Implementa retry logic para aguardar o RabbitMQ estar pronto
 func NewRabbitMQConnection(cfg *config.Config) (*RabbitMQClient, error) {
-	// Conectar ao RabbitMQ usando a URL de configuração
-	conn, err := amqp.Dial(cfg.RabbitMQURL)
+	var conn *amqp.Connection
+	var err error
+
+	// Tentar conectar com retry (até 30 segundos)
+	maxRetries := 30
+	retryInterval := 1 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		conn, err = amqp.Dial(cfg.RabbitMQURL)
+		if err == nil {
+			break
+		}
+
+		log.Warn().
+			Err(err).
+			Int("attempt", i+1).
+			Int("max_retries", maxRetries).
+			Msg("Failed to connect to RabbitMQ, retrying...")
+
+		if i < maxRetries-1 {
+			time.Sleep(retryInterval)
+		}
+	}
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		return nil, fmt.Errorf("failed to connect to RabbitMQ after %d attempts: %w", maxRetries, err)
 	}
 
 	// Criar canal de comunicação

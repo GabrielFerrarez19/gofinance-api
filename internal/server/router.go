@@ -127,9 +127,9 @@ func (r *Router) SetupRoutes() *gin.Engine {
 		reports := api.Group("/reports")
 		reports.Use(auth.AuthMiddleware(r.jwtManager, r.blacklist))
 		{
-			reports.POST("", r.rpHandler.Create)        // Criar relatório
-			reports.GET("", r.rpHandler.GetByID)        // Obter relatório
-			reports.GET("/:id", r.rpHandler.ListByUser) // Listar relatórios do usuário
+			reports.POST("", r.rpHandler.Create)     // Criar relatório
+			reports.GET("", r.rpHandler.ListByUser)  // Listar relatórios do usuário
+			reports.GET("/:id", r.rpHandler.GetByID) // Obter relatório
 		}
 	}
 

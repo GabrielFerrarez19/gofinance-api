@@ -25,6 +25,8 @@ import (
 	"github.com/GabrielFerrarez19/gofinance-api/internal/config"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/database"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/logger"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/queue"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/queue/jobs"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/report"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/server"
 	"github.com/GabrielFerrarez19/gofinance-api/internal/transaction"
@@ -59,6 +61,17 @@ func main() {
 	}
 	defer redisClient.Close() // Garantir fechamento da conexão ao finalizar
 
+	// Conectar ao RabbitMQ
+	rabbitmqClient, err := queue.NewRabbitMQConnection(cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to RabbitMQ")
+	}
+	defer rabbitmqClient.Close()
+
+	// Inicializar publisher e consumer
+	publisher := queue.NewPublisher(rabbitmqClient)
+	consumer := queue.NewConsumer(rabbitmqClient)
+
 	// Inicializar serviços de cache
 	// TokenBlacklist: serviço específico para gerenciar blacklist de tokens JWT
 	tokenBlacklist := cache.NewTokenBlacklist(redisClient)
@@ -86,6 +99,9 @@ func main() {
 	// ReportService depende do TransactionRepository para gerar relatórios
 	rpService := report.NewService(rpRepo, txRepo)
 
+	// Inicializar jobs
+	reportJob := jobs.NewReportJob(db)
+
 	// Inicializar handlers (camada de apresentação/HTTP)
 	// Cada handler processa requisições HTTP e chama os serviços correspondentes
 	userHandler := user.NewHandler(userService)
@@ -93,7 +109,7 @@ func main() {
 	accountHandler := account.NewHandler(accountService)
 	txHandler := transaction.NewHandler(txService)
 	ctHandler := category.NewHandler(ctService)
-	rpHandler := report.NewHandler(rpService)
+	rpHandler := report.NewHandler(rpService, publisher)
 
 	// Inicializar router e configurar rotas
 	// O router gerencia todas as rotas da API e aplica middlewares
@@ -115,6 +131,14 @@ func main() {
 		// ListenAndServe bloqueia até que o servidor seja fechado
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal().Err(err).Msg("Failed to start server")
+		}
+	}()
+
+	// Iniciar consumer de relatórios em backgroud
+	ctx := context.Background()
+	go func() {
+		if err := consumer.Consume(ctx, "report_generation", reportJob.Process); err != nil {
+			log.Error().Err(err).Msg("Failed to start report consumer")
 		}
 	}()
 
