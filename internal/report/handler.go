@@ -4,18 +4,22 @@ import (
 	"net/http"
 
 	"github.com/GabrielFerrarez19/gofinance-api/internal/models"
+	"github.com/GabrielFerrarez19/gofinance-api/internal/queue"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
-	service *Service
+	service   *Service
+	publisher *queue.Publisher
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service *Service, publisher *queue.Publisher) *Handler {
 	return &Handler{
-		service: service,
+		service:   service,
+		publisher: publisher,
 	}
 }
 
@@ -33,26 +37,60 @@ func NewHandler(service *Service) *Handler {
 // @Router /reports [post]
 // @Security BearerAuth
 func (h *Handler) Create(c *gin.Context) {
+	// Validar e bind do JSON da requisição
 	var req models.CreateReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Obter ID do usuário do contexto (setado pelo middleware de autenticação)
 	raw, ok := c.Get("user_id")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	// Converter user_id para pgtype.UUID
 	userID := pgtype.UUID{Bytes: raw.(uuid.UUID), Valid: true}
-	out, err := h.service.Create(c.Request.Context(), userID, req)
+
+	// Criar relatório inicialmente sem dados (ou com dados vazios)
+	// O job assíncrono irá preencher os dados depois
+	report, err := h.service.Create(c.Request.Context(), userID, req)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to create report")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, out)
+	// Preparar payload do job para processamento assíncrono
+	// O job irá buscar transações e calcular estatísticas
+	jobPayload := models.ReportJobPayload{
+		UserID:      userID.String(),
+		ReportID:    report.ID.String(),
+		Type:        string(req.Type),
+		Title:       req.Title,
+		Description: req.Description,
+		StartDate:   req.StartDate,
+		EndDate:     req.EndDate,
+	}
+
+	// Publicar job no RabbitMQ para processamento assícrono
+	// Isso permite que a reposta seja retornada imediatamente ao usuário
+	// enquanto o relatório é gerado em background
+	if err := h.publisher.Publish(c.Request.Context(), "report_generation", jobPayload, nil); err != nil {
+		log.Error().Err(err).Msg("Failed to publish report job")
+		// Continua mesmo se falhar (o relatório ja foi criado, pode ser processado depois)
+		// Em produção, você pode querer implementar retry ou modificar o usuario
+	} else {
+		log.Info().
+			Str("report_id", report.ID.String()).
+			Msg("Report job publisher to RabbitMQ successfully")
+	}
+
+	// Retorna resposta com o relatório criado
+	// O campo "data" estarã vazio inicialmente e será preenchido pelo job
+	c.JSON(http.StatusCreated, report)
 }
 
 // GetReport godoc

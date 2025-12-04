@@ -12,6 +12,12 @@ type TokenBlacklist struct {
 	client *redis.Client
 }
 
+func NewTokenBlacklist(redisClient *RedisClient) *TokenBlacklist {
+	return &TokenBlacklist{
+		client: redisClient.GetClient(),
+	}
+}
+
 // AddToken adiciona um token à blacklist até expirar
 func (tb *TokenBlacklist) AddToken(ctx context.Context, tokenID string, expiresIn time.Duration) error {
 	key := fmt.Sprintf("blacklist:token:%s", tokenID)

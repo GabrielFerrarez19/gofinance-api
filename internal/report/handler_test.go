@@ -23,6 +23,20 @@ type MockService struct {
 	mock.Mock
 }
 
+type MockPublisher struct {
+	mock.Mock
+}
+
+func (m *MockPublisher) Publish(ctx context.Context, queueName string, payload any, headers map[string]any) error {
+	args := m.Called(ctx, queueName, payload, headers)
+	return args.Error(0)
+}
+
+func (m *MockPublisher) PublishToExchange(ctx context.Context, exchange, routingKey string, payload any, headers map[string]any) error {
+	args := m.Called(ctx, exchange, routingKey, payload, headers)
+	return args.Error(0)
+}
+
 func (m *MockService) Create(ctx context.Context, userID pgtype.UUID, req models.CreateReportRequest) (models.ReportResponse, error) {
 	args := m.Called(ctx, userID, req)
 	if args.Get(0) == nil {
@@ -48,12 +62,14 @@ func (m *MockService) ListByUser(ctx context.Context, userID pgtype.UUID) ([]mod
 }
 
 type TestHandler struct {
-	service *MockService
+	service   *MockService
+	publisher *MockPublisher
 }
 
-func NewTestHandler(service *MockService) *TestHandler {
+func NewTestHandler(service *MockService, publisher *MockPublisher) *TestHandler {
 	return &TestHandler{
-		service: service,
+		service:   service,
+		publisher: publisher,
 	}
 }
 
@@ -76,6 +92,18 @@ func (h *TestHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Simular publicação do job (não faz nada no teste)
+	jobPayload := models.ReportJobPayload{
+		UserID:      userID.String(),
+		ReportID:    out.ID.String(),
+		Type:        string(req.Type),
+		Title:       req.Title,
+		Description: req.Description,
+		StartDate:   req.StartDate,
+		EndDate:     req.EndDate,
+	}
+	_ = h.publisher.Publish(c.Request.Context(), "report_generation", jobPayload, nil)
 
 	c.JSON(http.StatusCreated, out)
 }
@@ -206,7 +234,8 @@ func TestHandler_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockService := new(MockService)
-			handler := NewTestHandler(mockService)
+			mockPublisher := new(MockPublisher)
+			handler := NewTestHandler(mockService, mockPublisher)
 
 			router := gin.New()
 			router.POST("/reports", func(c *gin.Context) {
@@ -224,6 +253,9 @@ func TestHandler_Create(t *testing.T) {
 			if tt.setUserID && (tt.expectedStatus == http.StatusCreated || tt.expectedStatus == http.StatusInternalServerError) {
 				expectedUserID := pgtype.UUID{Bytes: userID, Valid: true}
 				mockService.On("Create", mock.Anything, expectedUserID, mock.Anything).Return(tt.mockResponse, tt.mockError)
+				if tt.expectedStatus == http.StatusCreated {
+					mockPublisher.On("Publish", mock.Anything, "report_generation", mock.Anything, mock.Anything).Return(nil)
+				}
 			}
 
 			router.ServeHTTP(w, req)
@@ -292,10 +324,10 @@ func TestHandler_GetByID(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name:      "service error",
-			id:        reportID.String(),
-			setUserID: true,
-			mockResponse: models.ReportResponse{},
+			name:           "service error",
+			id:             reportID.String(),
+			setUserID:      true,
+			mockResponse:   models.ReportResponse{},
 			mockError:      errors.New("report does not belong to user"),
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -304,7 +336,8 @@ func TestHandler_GetByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockService := new(MockService)
-			handler := NewTestHandler(mockService)
+			mockPublisher := new(MockPublisher)
+			handler := NewTestHandler(mockService, mockPublisher)
 
 			router := gin.New()
 			router.GET("/reports/:id", func(c *gin.Context) {
@@ -405,7 +438,8 @@ func TestHandler_ListByUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockService := new(MockService)
-			handler := NewTestHandler(mockService)
+			mockPublisher := new(MockPublisher)
+			handler := NewTestHandler(mockService, mockPublisher)
 
 			router := gin.New()
 			router.GET("/reports", func(c *gin.Context) {
@@ -438,4 +472,3 @@ func TestHandler_ListByUser(t *testing.T) {
 		})
 	}
 }
-
